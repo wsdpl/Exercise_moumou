@@ -428,7 +428,7 @@ class VideoThread(QThread):
             avg_score = self.total_score / self.detected_count
             sorted_fb = sorted(self.feedback_counts.items(), key=lambda x: -x[1])
             threshold = max(1, int(self.detected_count * 0.3))
-            main_fb = [item for item, cnt in sorted_fb if cnt >= threshold and '✅' not in item]
+            main_fb = [item for item, cnt in sorted_fb if cnt >= threshold not in item]
             if not main_fb:
                 main_fb = ['动作标准']
             advice_text = get_training_advice(main_fb)
