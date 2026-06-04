@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.spec
+
+# PyInstaller 打包输出
+release/
+
+# 数据集（太大不上传）
+EgoExo-Fitness/
+
+# 训练结果
+runs/
+
+# 其他不需要上传的文件
+.uploads/
+所需论文/
