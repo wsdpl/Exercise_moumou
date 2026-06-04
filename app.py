@@ -1,4 +1,4 @@
-import email  # PyInstaller 需要显式导入以正确打包 importlib.metadata 的依赖
+import email
 import email.parser
 import email.message
 import cv2
@@ -54,7 +54,7 @@ def validate_keypoints(required_pairs, kpts, confs):
     for name, (left_idx, right_idx) in required_pairs:
         pt, conf = get_best_kpt(kpts, confs, left_idx, right_idx)
         if not is_kpt_valid(pt, conf):
-            return False, "⚠️ 关键点检测不可靠，请调整姿势或光线"
+            return False, "关键点检测不可靠，请调整姿势或光线"
     return True, ""
 
 def cv2_put_text(img, text, pos, color=(0, 0, 0), fontSize=24):
@@ -122,38 +122,34 @@ def evaluate_squat(kpts, confs=None):
     knee_angle = calculate_angle(hip, knee, ankle)
     torso_angle = calculate_angle(shoulder, hip, knee)
 
-    # === 关键：只有真正在下蹲状态才评分 ===
-    # 站立姿态：膝角>=150°，完全不算深蹲动作
     if knee_angle >= 150:
         return None, ["站立姿态"]
-    # 微蹲/准备姿态：膝角130°~150°，不算有效下蹲
     if knee_angle >= 130:
         return None, ["微蹲姿态"]
 
-    # === 真正在下蹲状态，开始评分 ===
     score = 100
     feedback = []
 
-    # 1. 下蹲深度（核心指标）
+    # 1. 下蹲深度
     if knee_angle > 120:
-        feedback.append(f"❌ 蹲得太浅（膝关节角度{knee_angle:.0f}°，建议≤90°）")
+        feedback.append(f"蹲得太浅（膝关节角度{knee_angle:.0f}°，建议≤90°）")
         score -= 40
     elif knee_angle > 100:
-        feedback.append(f"⚠️ 下蹲深度不足（膝关节角度{knee_angle:.0f}°，可再深一些）")
+        feedback.append(f"下蹲深度不足（膝关节角度{knee_angle:.0f}°，可再深一些）")
         score -= 20
     elif knee_angle > 90:
-        feedback.append(f"⚠️ 接近标准深度（膝关节角度{knee_angle:.0f}°，可再低一点）")
+        feedback.append(f"接近标准深度（膝关节角度{knee_angle:.0f}°，可再低一点）")
         score -= 10
 
     # 2. 躯干稳定性
     if torso_angle < 45:
-        feedback.append(f"❌ 严重弯腰驼背（躯干角{torso_angle:.0f}°，请保持挺直）")
+        feedback.append(f"严重弯腰驼背（躯干角{torso_angle:.0f}°，请保持挺直）")
         score -= 30
     elif torso_angle < 60:
-        feedback.append(f"❌ 弯腰驼背（躯干角{torso_angle:.0f}°，注意挺胸收腹）")
+        feedback.append(f"弯腰驼背（躯干角{torso_angle:.0f}°，注意挺胸收腹）")
         score -= 20
     elif torso_angle < 70:
-        feedback.append(f"⚠️ 躯干略有前倾（躯干角{torso_angle:.0f}°，注意保持直立）")
+        feedback.append(f"躯干略有前倾（躯干角{torso_angle:.0f}°，注意保持直立）")
         score -= 10
 
     # 3. 膝盖对齐（侧面视角下膝盖是否过度前移/内扣）
@@ -161,14 +157,14 @@ def evaluate_squat(kpts, confs=None):
     if leg_length > 1:
         knee_forward = abs(knee[0] - hip[0]) / leg_length
         if knee_forward > 0.5:
-            feedback.append("❌ 膝盖过度前移/内扣，注意膝盖方向与脚尖一致")
+            feedback.append("膝盖过度前移/内扣，注意膝盖方向与脚尖一致")
             score -= 15
         elif knee_forward > 0.35:
-            feedback.append("⚠️ 膝盖略有偏移，注意控制方向")
+            feedback.append("膝盖略有偏移，注意控制方向")
             score -= 5
 
     if score >= 85:
-        feedback.append("✅ 动作标准")
+        feedback.append("动作标准")
     return max(score, 0), feedback
 
 
@@ -191,40 +187,37 @@ def evaluate_pushup(kpts, confs=None):
     elbow_angle = calculate_angle(shoulder, elbow, wrist)
     body_angle = calculate_angle(shoulder, hip, ankle)
 
-    # === 关键：只有真正在下压状态才评分 ===
-    # 休息/准备姿态：肘角>=160°或身体不成直线
     if elbow_angle >= 160:
         return None, ["休息姿态"]
     if body_angle < 140:
         return None, ["身体未撑起"]
 
-    # === 真正在下压状态，开始评分 ===
     score = 100
     feedback = []
 
-    # 1. 手臂弯曲度（核心指标）
+    # 1. 手臂弯曲度
     if elbow_angle > 130:
-        feedback.append(f"❌ 手臂未弯到底（肘角{elbow_angle:.0f}°，建议降至90°以下）")
+        feedback.append(f"手臂未弯到底（肘角{elbow_angle:.0f}°，建议降至90°以下）")
         score -= 40
     elif elbow_angle > 110:
-        feedback.append(f"⚠️ 手臂弯曲不足（肘角{elbow_angle:.0f}°，可再低一些）")
+        feedback.append(f"手臂弯曲不足（肘角{elbow_angle:.0f}°，可再低一些）")
         score -= 20
     elif elbow_angle > 90:
-        feedback.append(f"⚠️ 接近标准深度（肘角{elbow_angle:.0f}°，可再低一点）")
+        feedback.append(f"接近标准深度（肘角{elbow_angle:.0f}°，可再低一点）")
         score -= 10
 
     # 2. 身体直线
     if body_angle < 150:
-        feedback.append(f"❌ 严重塌腰/撅臀（身体角度{body_angle:.0f}°，请保持直线）")
+        feedback.append(f"严重塌腰/撅臀（身体角度{body_angle:.0f}°，请保持直线）")
         score -= 30
     elif body_angle < 165:
-        feedback.append(f"❌ 塌腰/撅臀（身体角度{body_angle:.0f}°，注意收紧核心）")
+        feedback.append(f"塌腰/撅臀（身体角度{body_angle:.0f}°，注意收紧核心）")
         score -= 20
     elif body_angle < 170:
-        feedback.append(f"⚠️ 身体略有弯曲（身体角度{body_angle:.0f}°，注意保持平直）")
+        feedback.append(f"身体略有弯曲（身体角度{body_angle:.0f}°，注意保持平直）")
         score -= 10
 
-    # 3. 核心稳定性（左右肩/髋高度差）
+    # 3. 核心稳定性
     if 5 < len(kpts) and 6 < len(kpts):
         shoulder_diff = abs(float(kpts[5][1]) - float(kpts[6][1]))
     else:
@@ -237,14 +230,14 @@ def evaluate_pushup(kpts, confs=None):
     if torso_len > 1:
         wobble_ratio = (shoulder_diff + hip_diff) / (2 * torso_len)
         if wobble_ratio > 0.15:
-            feedback.append("❌ 躯干晃动/侧弯明显，注意保持身体稳定")
+            feedback.append("躯干晃动/侧弯明显，注意保持身体稳定")
             score -= 15
         elif wobble_ratio > 0.08:
-            feedback.append("⚠️ 躯干有轻微晃动，注意控制稳定性")
+            feedback.append("躯干有轻微晃动，注意控制稳定性")
             score -= 5
 
     if score >= 85:
-        feedback.append("✅ 动作标准")
+        feedback.append("动作标准")
     return max(score, 0), feedback
 
 
@@ -266,36 +259,34 @@ def evaluate_situp(kpts, confs=None):
     torso_length = np.linalg.norm(np.array(shoulder, dtype=np.float32) - np.array(hip, dtype=np.float32))
     rise_ratio = shoulder_rise / torso_length if torso_length > 1 else 0.0
 
-    # === 关键：只有真正在起身状态才评分 ===
     if rise_ratio < 0.05:
         return None, ["躺平姿态"]
     if rise_ratio < 0.15:
         return None, ["微起姿态"]
 
-    # === 真正在起身状态，开始评分 ===
     score = 100
     feedback = []
 
-    # 1. 起身幅度（核心指标）
+    # 1. 起身幅度
     if rise_ratio < 0.25:
-        feedback.append(f"❌ 起身幅度严重不足（上升比{rise_ratio:.2f}，需充分坐起）")
+        feedback.append(f"起身幅度严重不足（上升比{rise_ratio:.2f}，需充分坐起）")
         score -= 40
     elif rise_ratio < 0.35:
-        feedback.append(f"❌ 起身幅度不足（上升比{rise_ratio:.2f}，需再高一些）")
+        feedback.append(f"起身幅度不足（上升比{rise_ratio:.2f}，需再高一些）")
         score -= 25
     elif rise_ratio < 0.45:
-        feedback.append(f"⚠️ 起身幅度一般（上升比{rise_ratio:.2f}，可再高一些）")
+        feedback.append(f"起身幅度一般（上升比{rise_ratio:.2f}，可再高一些）")
         score -= 15
 
     # 2. 髋关节弯曲
     if hip_angle > 120:
-        feedback.append(f"❌ 髋关节未充分弯曲（髋角{hip_angle:.0f}°，建议腹部发力卷起）")
+        feedback.append(f"髋关节未充分弯曲（髋角{hip_angle:.0f}°，建议腹部发力卷起）")
         score -= 25
     elif hip_angle > 100:
-        feedback.append(f"⚠️ 髋关节弯曲不足（髋角{hip_angle:.0f}°，注意腹部发力）")
+        feedback.append(f"髋关节弯曲不足（髋角{hip_angle:.0f}°，注意腹部发力）")
         score -= 15
     elif hip_angle > 85:
-        feedback.append(f"⚠️ 接近标准（髋角{hip_angle:.0f}°，可再弯曲一些）")
+        feedback.append(f"接近标准（髋角{hip_angle:.0f}°，可再弯曲一些）")
         score -= 5
 
     # 3. 躯干稳定性
@@ -306,14 +297,14 @@ def evaluate_situp(kpts, confs=None):
     if torso_length > 1:
         wobble_ratio = shoulder_diff / torso_length
         if wobble_ratio > 0.2:
-            feedback.append("❌ 躯干歪斜明显，注意保持上身正直")
+            feedback.append("躯干歪斜明显，注意保持上身正直")
             score -= 15
         elif wobble_ratio > 0.1:
-            feedback.append("⚠️ 躯干略有歪斜，注意保持对称发力")
+            feedback.append("躯干略有歪斜，注意保持对称发力")
             score -= 5
 
     if score >= 85:
-        feedback.append("✅ 动作标准")
+        feedback.append("动作标准")
     return max(score, 0), feedback
 
 def get_training_advice(feedback):
@@ -385,7 +376,7 @@ class VideoThread(QThread):
         self.total_score = 0
         self.detected_count = 0
         self.feedback_counts = {}
-        self.detect_interval = 3  # 每3帧检测一次，兼顾精度与速度
+        self.detect_interval = 3
 
     def run(self):
         cap = cv2.VideoCapture(self.video_path)
@@ -410,7 +401,6 @@ class VideoThread(QThread):
             progress = int((count / total_frames) * 100)
             self.update_progress.emit(progress)
 
-            # 每N帧同步检测一次（不再异步，确保每帧都有关键点绘制）
             if count % self.detect_interval == 1:
                 kpts, confs, score, fb = self._detect_frame(frame)
                 if kpts is not None:
@@ -422,7 +412,6 @@ class VideoThread(QThread):
                         for fb_item in fb:
                             self.feedback_counts[fb_item] = self.feedback_counts.get(fb_item, 0) + 1
 
-            # 用最新关键点绘制当前帧
             if last_kpts is not None:
                 display = draw_pose(frame.copy(), last_kpts, last_confs)
             else:
@@ -441,7 +430,7 @@ class VideoThread(QThread):
             threshold = max(1, int(self.detected_count * 0.3))
             main_fb = [item for item, cnt in sorted_fb if cnt >= threshold and '✅' not in item]
             if not main_fb:
-                main_fb = ['✅ 动作标准']
+                main_fb = ['动作标准']
             advice_text = get_training_advice(main_fb)
             summary = f"=== 综合评估 (共检测{self.detected_count}帧) ===\n"
             summary += f"平均得分: {avg_score:.1f} 分\n\n"
@@ -563,7 +552,7 @@ class CameraThread(QThread):
             threshold = max(1, int(self.detected_count * 0.3))
             main_fb = [item for item, count in sorted_fb if count >= threshold and "动作标准" not in item]
             if not main_fb:
-                main_fb = ["✅ 动作标准"]
+                main_fb = ["动作标准"]
             advice_text = get_training_advice(main_fb)
             summary = f"└── 综合评估 (共检测{self.detected_count}帧) ──┘\n"
             summary += f"平均得分: {avg_score:.1f} 分\n\n"
@@ -611,10 +600,10 @@ class MainWindow(QMainWindow):
         btn_group = QGroupBox("功能操作")
         btn_group.setStyleSheet("color: black;")
         btn_layout = QVBoxLayout(btn_group)
-        self.select_btn = QPushButton("📂 选择视频")
-        self.start_btn = QPushButton("🚀 开始评估预览")
-        self.camera_btn = QPushButton("📷 开启摄像头")
-        self.stop_btn = QPushButton("⏹ 停止运行")
+        self.select_btn = QPushButton("选择视频")
+        self.start_btn = QPushButton("开始评估预览")
+        self.camera_btn = QPushButton("开启摄像头")
+        self.stop_btn = QPushButton("停止运行")
         btn_style = "QPushButton { padding: 10px; border-radius: 6px; font-size: 14px; color:black; background:#e9ecef; }"
         self.select_btn.setStyleSheet(btn_style)
         self.start_btn.setStyleSheet(btn_style)
@@ -713,7 +702,7 @@ class MainWindow(QMainWindow):
     def show_advice(self, text):
         self.advice_stack.setCurrentIndex(1)
         self.advice_text.setText(text)
-        if "✅ 动作标准" in text:
+        if "动作标准" in text:
             img_name = "good.png"
         else:
             img_name = "bad.jpg"
